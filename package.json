@@ -1,0 +1,15 @@
+{
+	"name": "com.isostopy.stepsystem",
+	"displayName": "Step System",
+	"version":"1.0.0",
+	"description": "Paquete de Unity para generar secuencias de eventos y experiencias lineales.",
+	"author": "isostopy",
+	"samples":
+	[
+		{
+			"displayName":"Step System Sample",
+			"description":"Escena en la que se muestra el funcionamiento del paquete.",
+			"path":"Sample"
+		}
+	]
+}
