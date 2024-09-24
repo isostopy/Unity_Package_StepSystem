@@ -83,6 +83,7 @@ public abstract class Step : MonoBehaviour
 
 	#endregion
 
+
 	// ------------------------------------------------------------------------------------------------------------
 	#region Public
 
@@ -104,10 +105,19 @@ public abstract class Step : MonoBehaviour
 
 
 	// ------------------------------------------------------
+	#region On Disable
+
+	// Esto hace falta porque Unity llama OnDisable al salir del Play en el editor, y eso da error en algunos pasos.
+	bool _quiting = false;
+	private void OnApplicationQuit() => _quiting = true;
 
 	void OnDisable()
 	{
+		if (_quiting)
+			return;
 		// Al desactivar este componente o GameObject, si este paso estaba activado, terminarlo.
 		if (manager != null && _active) End();
 	}
+
+	#endregion
 }
