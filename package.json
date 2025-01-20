@@ -7,9 +7,9 @@
 	"samples":
 	[
 		{
-			"displayName":"Step System Sample",
+			"displayName":"Basic Usage",
 			"description":"Escena en la que se muestra el funcionamiento del paquete.",
-			"path":"Sample"
+			"path":"Samples/Usage"
 		}
 	]
 }
