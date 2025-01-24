@@ -7,8 +7,8 @@ using UnityEditor;
 /// <summary>
 /// Controla la cadena de pasos en la escena. </summary>
 /// Buscando entre los hijos del GameObject cualquier componente Step que aparezca, para ir activandolos en el orden en que aparecen en la jerarquia.
-[AddComponentMenu("Isostopy/Step System/Manager/Step Manager")]
-public class StepManager : MonoBehaviour
+[AddComponentMenu("Isostopy/Step System/Step Chain")]
+public class StepChain : MonoBehaviour
 {
 	/// <summary> Lista de Steps en el orden en el que aparecen en la jerarquia. </summary>
 	List<Step> stepList = new List<Step>();

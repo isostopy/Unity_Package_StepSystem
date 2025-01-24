@@ -5,7 +5,7 @@ using UnityEngine;
 public abstract class Step : MonoBehaviour
 {
     /// <summary> Referencia al manager que controla este Step. </summary>
-    protected StepManager manager { get; set; }  = null;
+    protected StepChain manager { get; set; }  = null;
 	/// <summary> TRUE mientras este step esta activo. </summary>
 	private bool _active = false;
 
@@ -88,7 +88,7 @@ public abstract class Step : MonoBehaviour
 	#region Public
 
 	/// <summary> Establece el manager de este Step. </summary>
-	public void SetManager(StepManager setManager)
+	public void SetManager(StepChain setManager)
     {
         if (manager != null)
             manager.DeleteStep(this);
