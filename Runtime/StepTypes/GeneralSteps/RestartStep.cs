@@ -1,13 +1,16 @@
 using UnityEngine;
 
-/// <summary>
-/// Step que reinicia la cadena de pasos. </summary>
-[AddComponentMenu("Isostopy/Step System/General/Restart Step")]
-public class RestartStep : Step
+namespace Isostopy.StepSystem.Types
 {
-	protected override void OnActivate()
+	/// <summary>
+	/// Step que reinicia la cadena de pasos. </summary>
+	[AddComponentMenu("Isostopy/Step System/General/Restart Step")]
+	public class RestartStep : Step
 	{
-		End();
-		manager.Restart();
+		protected override void OnActivate()
+		{
+			End();
+			chain.Restart();
+		}
 	}
 }

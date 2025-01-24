@@ -1,36 +1,39 @@
 using UnityEngine;
 using UnityEditor;
 
-/// Editor personalizado para los componentes Step.
-/// Si el Step esta activo, dibuja un rectangulo amarillo en la parte superior del componente para indicarlo.
-
-[CustomEditor(typeof(Step), true)]
-[CanEditMultipleObjects]
-class Step_Editor : Editor
+namespace Isostopy.StepSystem.Editor
 {
-	Step thisStep;
+	/// Editor personalizado para los componentes Step.
+	/// Si el Step esta activo, dibuja un rectangulo amarillo en la parte superior del componente para indicarlo.
 
-	void OnEnable()
+	[CustomEditor(typeof(Step), true)]
+	[CanEditMultipleObjects]
+	class Step_Editor : UnityEditor.Editor
 	{
-		thisStep = target as Step;
-	}
+		Step thisStep;
 
-	public override void OnInspectorGUI()
-	{
-		if (thisStep.active)
+		void OnEnable()
 		{
-			Rect rect = EditorGUILayout.GetControlRect();
-			EditorGUI.DrawRect(rect, Color.yellow);
-			EditorGUI.LabelField(rect, "   Active Step!", new GUIStyle()
-			{
-				normal = new GUIStyleState() { textColor = Color.black },
-				fontStyle = FontStyle.Bold
-			});
-
-			/// Asegura que Unity redibuje la ventana del inspector.
-			EditorUtility.SetDirty(target);
+			thisStep = target as Step;
 		}
 
-		DrawDefaultInspector();
+		public override void OnInspectorGUI()
+		{
+			if (thisStep.active)
+			{
+				Rect rect = EditorGUILayout.GetControlRect();
+				EditorGUI.DrawRect(rect, Color.yellow);
+				EditorGUI.LabelField(rect, "   Active Step!", new GUIStyle()
+				{
+					normal = new GUIStyleState() { textColor = Color.black },
+					fontStyle = FontStyle.Bold
+				});
+
+				/// Asegura que Unity redibuje la ventana del inspector.
+				EditorUtility.SetDirty(target);
+			}
+
+			DrawDefaultInspector();
+		}
 	}
 }
