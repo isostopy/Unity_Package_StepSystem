@@ -7,32 +7,54 @@ using UnityEditor;
 namespace Isostopy.StepSystem
 {
 	/// <summary>
-	/// Controla la cadena de pasos en la escena. </summary>
+	/// Ejecuta una cadena de pasos. </summary>
 	/// Buscando entre los hijos del GameObject cualquier componente Step que aparezca, para ir activandolos en el orden en que aparecen en la jerarquia.
 
 	[AddComponentMenu("Isostopy/Step System/Step Chain")]
 	public class StepChain : MonoBehaviour
 	{
 		/// <summary> Lista de Steps en el orden en el que aparecen en la jerarquia. </summary>
-		List<Step> stepList = new List<Step>();
-		/// <summary> Indice del evento que esta actualmente activo. </summary>
-		[SerializeField][HideInInspector] int currentStep = 0;
+		private List<Step> stepList = new List<Step>();
+		/// <summary> Indice del Step que esta actualmente activo. </summary>
+		[SerializeField][HideInInspector] private int currentStepIndex = -1;
+		/// <summary> Paso que esta actualmente activo. </summary>
+		private Step currentStep
+		{
+			get
+			{
+				if (currentStepIndex < 0 || currentStepIndex >= stepList.Count)
+					return null;
+				return stepList[currentStepIndex];
+			}
+		}
 
-		/// <summary> Si tiene o no que iniciar automaticamente la cadena de Steps. </summary>
-		[Space][SerializeField] bool playOnStart = true;
+		/// Si tiene o no que iniciar automaticamente la cadena de Steps.
+		[Space][SerializeField] private bool playOnStart = true;
+		/// Si se esta ejecutando la cadena de pasos.
+		public bool playing { get; private set; }
 
 
 		// ------------------------------------------------------
 		#region Start
 
+		private void Awake()
+		{
+			// Encontrar todos los pasos en los hijos de este objeto.
+			Step[] stepComponents = GetComponentsInChildren<Step>(true);
+			foreach (var step in stepComponents)
+			{
+				stepList.Add(step);
+				step.SetChain(this);
+			}
+		}
+
 		IEnumerator Start()
 		{
 			AddCustomHierarchyListners();
-			FindStepsIn(transform);
 
+			// Espera un frame para que todos los Steps hayan ejecutado su Start, y empezar la cadena.
 			if (playOnStart)
 			{
-				// Espera un frame para que todos los Steps hayan ejecutado su Start. Y empezar la cadena de eventos.
 				yield return new WaitForEndOfFrame();
 				Play();
 			}
@@ -40,64 +62,7 @@ namespace Isostopy.StepSystem
 
 		private void OnDisable()
 		{
-			Cancel();
-		}
-
-		#endregion
-
-
-		// ------------------------------------------------------
-		#region StepList
-
-		/// <summary>
-		/// Encuentra y añade a la lista todos los Step que aparecen en los hijos del transform indicado. </summary>
-		void FindStepsIn(Transform parent)
-		{
-			Transform child;
-			Step[] stepComponents;
-
-			for (int i = 0; i < parent.childCount; i++)
-			{
-				child = parent.GetChild(i);
-				stepComponents = child.GetComponents<Step>();
-
-				foreach (Step step in stepComponents)
-					AddStep(step);
-
-				// Si alguno de los hijos tiene hijos tambien, buscar Steps entre ellos.
-				if (child.childCount > 0)
-					FindStepsIn(child);         /// funcion recursiva
-			}
-		}
-
-		/// <summary>
-		/// ¿Esta en indice indicado entre los limites de la lista de Steps? </summary>
-		bool IsValidStepIndex(int index)
-		{
-			if (stepList == null) return false;
-			if (index < 0 || index >= stepList.Count)
-				return false;
-			return true;
-		}
-
-		/// <summary> Elimina un Step de la cadena de ejecucion. </summary>
-		public void DeleteStep(Step step)
-		{
-			if (stepList.Contains(step))
-				stepList.Remove(step);
-		}
-
-		/// <summary> Añade un Step a la cadena de ejecucion. </summary>
-		public void AddStep(Step step, int index = -1)
-		{
-			if (stepList.Contains(step))
-				return;
-
-			if (IsValidStepIndex(index))
-				stepList.Insert(index, step);
-			else
-				stepList.Add(step);
-			step.SetChain(this);
+			Restart();
 		}
 
 		#endregion
@@ -107,70 +72,64 @@ namespace Isostopy.StepSystem
 		#region Step Management
 
 		/// <summary>
-		/// Notifica a este manager que un Step ha terminado. </summary>
+		/// Notifica a esta cadena que un Step ha terminado. </summary>
 		public void StepEnded(Step step)
 		{
-			// Activar el siguiente si el que ha terminado es el currentStep.
-			if (!IsValidStepIndex(currentStep) || stepList[currentStep] != step)
+			if (playing == false)
+				return;
+			if (step != currentStep)
 				return;
 
-			// Pasar al siguiente paso que no sea null. (Para que no de error si se destruye un Step).
-			do
+			// Activar el siguiente paso si quedan en la lista.
+			currentStepIndex++;
+			if (currentStepIndex >= stepList.Count)
 			{
-				currentStep++;
-				RedrawHierarchy();
-			} while (IsValidStepIndex(currentStep) && stepList[currentStep] == null);
-
-			// Activar el siguiente paso.
-			if (!IsValidStepIndex(currentStep))
+				playing = false;
+				currentStepIndex = -1;
 				return;
-			stepList[currentStep].Activate();
+			}
+			currentStep.Activate();
 		}
 
-		/// <summary> Inicia o reanuda la ejecuccion de la cadena de Steps. </summary>
+		/// <summary>
+		/// Inicia la ejecuccion de la cadena de Steps desde el primero. </summary>
 		public void Play()
 		{
 			if (stepList.Count == 0)
 				return;
 
-			/// Si indice del paso actual esta fuera de los limites de la lista por lo que sea,
-			/// reiniciarla la cadena desde el prinicpio.
-			if (IsValidStepIndex(currentStep))
-				stepList[currentStep].Activate();
-			else
+			if (currentStepIndex >= 0)
 				Restart();
+
+			playing = true;
+			currentStepIndex = 0;
+			stepList[currentStepIndex].Activate();
 
 			RedrawHierarchy();
 		}
 
 		/// <summary>
-		/// Para la cadena de Steps, devolviendola a su estado inicial
-		/// lista para activarla otra vez desde el inicio. </summary>
-		public void Cancel()
+		/// Devuelve la cadena de Steps a su estado inicial, parandola si esta en marcha. </summary>
+		public void Restart()
 		{
-			int i = currentStep;        /// Restear de atras alante desde currentStep.
+			int i = currentStepIndex;        // Restear de atras alante desde currentStep.
 			if (i >= stepList.Count) i = stepList.Count - 1;
 
-			currentStep = -1;
 			while (i >= 0)
 			{
 				stepList[i].Restart();
 				i--;
 			}
-			currentStep = 0;
+
+			playing = false;
+			currentStepIndex = -1;
 
 			RedrawHierarchy();
 		}
 
-		/// <summary> Reinicia la cadena de Steps desde el principio. </summary>
-		public void Restart()
-		{
-			Cancel();
-			Play();
-		}
-
 		/// <summary>
-		/// Ir al Step objetivo. Asegurando de dejar terminados los pasos anteriores y reseteados los posteriores. </summary>
+		/// Ir al Step objetivo. Asegurando de dejar terminados los pasos anteriores y reseteados los posteriores. <para></para>
+		/// [ ! ] - Esto no esta probado y es posible que no funcione correctamente. </summary>
 		public void GoToStep(Step step)
 		{
 			// Error si este manager no tiene el paso indicado.
@@ -181,28 +140,28 @@ namespace Isostopy.StepSystem
 			}
 
 			// Si el paso indicado es el actual, dejarlo como esta.
-			if (step == stepList[currentStep])
+			if (step == stepList[currentStepIndex])
 				return;
 
-			int i = currentStep;
-			currentStep = stepList.IndexOf(step);
+			int i = currentStepIndex;
+			currentStepIndex = stepList.IndexOf(step);
 			// Si el objetivo esta por encima del actual, ir activando y terminando todos hasta llegar al nuestro.
-			if (i < currentStep)
+			if (i < currentStepIndex)
 			{
 				stepList[i].End();
 				i++;
 
-				while (i < currentStep)
+				while (i < currentStepIndex)
 				{
 					stepList[i].Activate();
 					stepList[i].End();
 					i++;
 				}
 			}
-			// Si esta por debajo, ir reiniciandolos.
+			// Si esta por debajo, ir reseteandolos.
 			else
 			{
-				while (i > currentStep)
+				while (i > currentStepIndex)
 				{
 					stepList[i].Restart();
 					i--;
@@ -210,7 +169,7 @@ namespace Isostopy.StepSystem
 			}
 
 			// Activar el nuevo paso actual.
-			stepList[currentStep].Activate();
+			stepList[currentStepIndex].Activate();
 			RedrawHierarchy();
 		}
 
@@ -271,12 +230,15 @@ namespace Isostopy.StepSystem
 			/// InstanceId nos dice por que objeto ha sido llamada la funcion. Pero hay que convertirlo a GameObject.
 			/// SelectoinRect es el especio en la ventana de la jerarquia que ocupa la label de este objeto.
 
+			if (playing == false)
+				return;
+
 			/// GameObject del elemento de la jerarquia por el que se ha llamado esta función.
 			GameObject hierarchyItem = EditorUtility.InstanceIDToObject(instanceId) as GameObject;
-			if (hierarchyItem == null || !IsValidStepIndex(currentStep))
+			if (hierarchyItem == null)
 				return;
 			/// GameObject del currentStep.
-			GameObject activeStep = stepList[currentStep].gameObject;
+			GameObject activeStep = stepList[currentStepIndex].gameObject;
 			/// Color amarillo.
 			Color yellow = Color.yellow;
 			/// Color del editor de Unity en modo oscuro. El claro es (194, 194, 194, 255).

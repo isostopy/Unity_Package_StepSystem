@@ -10,7 +10,7 @@ namespace Isostopy.StepSystem.Types
 		protected override void OnActivate()
 		{
 			End();
-			chain.Restart();
+			chain.Play();
 		}
 	}
 }

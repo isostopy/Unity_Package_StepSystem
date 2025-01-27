@@ -16,7 +16,7 @@ namespace Isostopy.StepSystem
 		#region Step Functions
 
 		/*	Cada funcion tiene 2 partes, una public que es llamada desde otras clases y componentes.		*
-		 *	Y una "protected virtual" para que los diferentes steps sobreesicriban haciendo lo que quieran.	*/
+		 *	Y una "protected virtual" para que los diferentes steps sobresicriban haciendo lo que quieran.	*/
 
 		// ------------------------------------------------------
 		#region Activate
@@ -71,8 +71,6 @@ namespace Isostopy.StepSystem
 		/// Devuelve el Step a su estado inicial, listo para volver a llamar al Activate. </summary>
 		public void Restart()
 		{
-			if (_active == true)
-				End();
 			_active = false;
 
 			OnRestart();
@@ -109,17 +107,18 @@ namespace Isostopy.StepSystem
 		// ------------------------------------------------------
 		#region On Disable
 
-		// Esto hace falta porque Unity llama OnDisable al salir del Play en el editor, y eso da error en algunos pasos.
-		bool _quiting = false;
-		private void OnApplicationQuit() => _quiting = true;
-
+		// Al desactivar este componente o GameObject, si este paso estaba activado, terminarlo.
 		void OnDisable()
 		{
 			if (_quiting)
 				return;
-			// Al desactivar este componente o GameObject, si este paso estaba activado, terminarlo.
+
 			if (chain != null && _active) End();
 		}
+
+		// Esto hace falta porque Unity llama OnDisable al salir del Play en el editor, y eso da error en algunos pasos.
+		bool _quiting = false;
+		private void OnApplicationQuit() => _quiting = true;
 
 		#endregion
 	}
