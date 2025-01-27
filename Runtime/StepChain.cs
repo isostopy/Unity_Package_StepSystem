@@ -50,8 +50,6 @@ namespace Isostopy.StepSystem
 
 		IEnumerator Start()
 		{
-			AddCustomHierarchyListners();
-
 			// Espera un frame para que todos los Steps hayan ejecutado su Start, y empezar la cadena.
 			if (playOnStart)
 			{
@@ -104,8 +102,6 @@ namespace Isostopy.StepSystem
 			playing = true;
 			currentStepIndex = 0;
 			stepList[currentStepIndex].Activate();
-
-			RedrawHierarchy();
 		}
 
 		/// <summary>
@@ -123,8 +119,6 @@ namespace Isostopy.StepSystem
 
 			playing = false;
 			currentStepIndex = -1;
-
-			RedrawHierarchy();
 		}
 
 		/// <summary>
@@ -170,108 +164,8 @@ namespace Isostopy.StepSystem
 
 			// Activar el nuevo paso actual.
 			stepList[currentStepIndex].Activate();
-			RedrawHierarchy();
 		}
 
-		#endregion
-
-
-		// ------------------------------------------------------
-		#region Custom Hierarchy
-
-		/* La idea es que se vaya resaltando el Step que esta activo en la jerarquia para que sepamos por donde va la ejecucion.
-		 * Pero las cosas del editor (using UnityEditor) no se incluyen en las builds finales,
-		 * por lo que usarlas en un script normal como este hara que el juego final de un error.
-		 * Para evitarlo, usamos las directivas #if y #endif. Que nos permite excluir codigo de la compilacion. */
-
-		/// <summary>
-		/// Añade listeners a los eventos del editor que necesitamos para personalizar el aspecto de la ventana de Hierarchy. </summary>
-		void AddCustomHierarchyListners()
-		{
-#if UNITY_EDITOR
-			{
-				// Añadimos un listner al evento de redibujado de la ventana Hierarchy.
-				EditorApplication.hierarchyWindowItemOnGUI += OnDrawHierarchyItem;
-				// Añadimos un listener al evento de cambio de estado del editor entre PlayMode y EditMode.
-				EditorApplication.playModeStateChanged += OnPlayModeChange;
-			}
-#endif
-		}
-
-		/// <summary> Fuerza que se redibuje la ventana de Hierarchy en el editor. </summary>
-		void RedrawHierarchy()
-		{
-#if UNITY_EDITOR
-			EditorApplication.RepaintHierarchyWindow();
-#endif
-		}
-
-
-#if UNITY_EDITOR
-
-		/// A esta funcion se llama al salir y entrar del modo Play.
-		void OnPlayModeChange(PlayModeStateChange state)
-		{
-			///	Al salir del PlayMode, borramos los listeners porque lo que queremos es pintar diferente
-			///	el GameObject del Step que esta activo, y solo pueden estar activos en PlayMode.
-
-			if (state != PlayModeStateChange.ExitingPlayMode)
-				return;
-
-			EditorApplication.hierarchyWindowItemOnGUI -= OnDrawHierarchyItem;
-			EditorApplication.playModeStateChanged -= OnPlayModeChange;
-
-			RedrawHierarchy();
-		}
-
-		/// A esta funcion se la llama por cada GameObject visible en la ventana de Hierarchy.
-		void OnDrawHierarchyItem(int instanceId, Rect selectionRect)
-		{
-			/// InstanceId nos dice por que objeto ha sido llamada la funcion. Pero hay que convertirlo a GameObject.
-			/// SelectoinRect es el especio en la ventana de la jerarquia que ocupa la label de este objeto.
-
-			if (playing == false)
-				return;
-
-			/// GameObject del elemento de la jerarquia por el que se ha llamado esta función.
-			GameObject hierarchyItem = EditorUtility.InstanceIDToObject(instanceId) as GameObject;
-			if (hierarchyItem == null)
-				return;
-			/// GameObject del currentStep.
-			GameObject activeStep = stepList[currentStepIndex].gameObject;
-			/// Color amarillo.
-			Color yellow = Color.yellow;
-			/// Color del editor de Unity en modo oscuro. El claro es (194, 194, 194, 255).
-			Color defaultBackground = new Color32(56, 56, 56, 255);
-
-			// Pintar el Step activo.
-			if (activeStep == hierarchyItem)
-				DrawLabel(hierarchyItem.name, selectionRect, yellow, Color.black, FontStyle.BoldAndItalic);
-			// Pintar los padres del Step activo.
-			//else if (activeStep.transform.IsChildOf(hierarchyItem.transform))
-			//	DrawLabel(hierarchyItem.name, selectionRect, yellow, Color.black, FontStyle.Normal);
-			// Pintar los steps por los que ya hemos pasado.
-			//else if (hierarchyItem.activeSelf && hierarchyItem.activeInHierarchy)
-			//{
-			//	int objStepIndex = stepList.IndexOf( hierarchyItem.GetComponent<Step>() );
-			//	if (objStepIndex >= 0 && objStepIndex <= currentStep)
-			//		DrawLabel(hierarchyItem.name, selectionRect, defaultBackground, yellow, FontStyle.Normal);
-			//}
-		}
-
-		void DrawLabel(string name, Rect rect, Color backgroundColor, Color textColor, FontStyle fontStyle)
-		{
-			// Dibujar el rectangulo de fondo con el color indicado.
-			EditorGUI.DrawRect(rect, backgroundColor);
-			// Y el nombre en negrita del color indicado.
-			EditorGUI.LabelField(rect, name, new GUIStyle()
-			{
-				normal = new GUIStyleState() { textColor = textColor },
-				fontStyle = fontStyle
-			});
-		}
-
-#endif
 		#endregion
 	}
 }

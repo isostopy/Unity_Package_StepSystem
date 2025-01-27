@@ -3,7 +3,6 @@ using UnityEditor;
 
 namespace Isostopy.StepSystem.Editor
 {
-	/// Editor personalizado para los componentes Step.
 	/// Si el Step esta activo, dibuja un rectangulo amarillo en la parte superior del componente para indicarlo.
 
 	[CustomEditor(typeof(Step), true)]
@@ -12,9 +11,20 @@ namespace Isostopy.StepSystem.Editor
 	{
 		Step thisStep;
 
+		static GUIStyle labelStyle = null;
+
+
+		// -------------------------------
+
 		void OnEnable()
 		{
 			thisStep = target as Step;
+
+			labelStyle = new GUIStyle()
+			{
+				normal = new GUIStyleState() { textColor = Color.black },
+				fontStyle = FontStyle.Bold
+			};
 		}
 
 		public override void OnInspectorGUI()
@@ -23,11 +33,7 @@ namespace Isostopy.StepSystem.Editor
 			{
 				Rect rect = EditorGUILayout.GetControlRect();
 				EditorGUI.DrawRect(rect, Color.yellow);
-				EditorGUI.LabelField(rect, "   Active Step!", new GUIStyle()
-				{
-					normal = new GUIStyleState() { textColor = Color.black },
-					fontStyle = FontStyle.Bold
-				});
+				EditorGUI.LabelField(rect, "   Active Step!", labelStyle);
 
 				/// Asegura que Unity redibuje la ventana del inspector.
 				EditorUtility.SetDirty(target);

@@ -9,7 +9,7 @@ namespace Isostopy.StepSystem
 		/// <summary> Referencia al manager que controla este Step. </summary>
 		protected StepChain chain { get; set; } = null;
 		/// <summary> TRUE mientras este step esta activo. </summary>
-		private bool _active = false;
+		public bool active { get; private set; }
 
 
 		// ------------------------------------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ namespace Isostopy.StepSystem
 				return;
 			}
 
-			_active = true;
+			active = true;
 			OnActivate();
 		}
 
@@ -48,12 +48,12 @@ namespace Isostopy.StepSystem
 		/// Termina este Step. Informando al manager de que ha terminado. </summary>
 		public void End()
 		{
-			if (this._active == false)
+			if (active == false)
 				return;
 
 			OnEnd();
 
-			_active = false;
+			active = false;
 			if (chain != null)
 				chain.StepEnded(this);
 		}
@@ -71,7 +71,7 @@ namespace Isostopy.StepSystem
 		/// Devuelve el Step a su estado inicial, listo para volver a llamar al Activate. </summary>
 		public void Restart()
 		{
-			_active = false;
+			active = false;
 
 			OnRestart();
 		}
@@ -96,10 +96,10 @@ namespace Isostopy.StepSystem
 		}
 
 		/// <summary> ¿Esta este Step activo? </summary>
-		public bool active
-		{
-			get { return _active; }
-		}
+		//public bool active
+		//{
+		//	get { return _active; }
+		//}
 
 		#endregion
 
@@ -113,7 +113,7 @@ namespace Isostopy.StepSystem
 			if (_quiting)
 				return;
 
-			if (chain != null && _active) End();
+			if (chain != null && active) End();
 		}
 
 		// Esto hace falta porque Unity llama OnDisable al salir del Play en el editor, y eso da error en algunos pasos.
