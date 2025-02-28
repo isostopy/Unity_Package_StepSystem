@@ -16,9 +16,9 @@ namespace Isostopy.StepSystem
 		/// <summary> Lista de Steps en el orden en el que aparecen en la jerarquia. </summary>
 		private List<Step> stepList = new List<Step>();
 		/// <summary> Indice del Step que esta actualmente activo. </summary>
-		[SerializeField][HideInInspector] private int currentStepIndex = -1;
+		public int currentStepIndex { get; private set; } = -1;
 		/// <summary> Paso que esta actualmente activo. </summary>
-		private Step currentStep
+		public Step currentStep
 		{
 			get
 			{
@@ -134,18 +134,21 @@ namespace Isostopy.StepSystem
 			}
 
 			// Si el paso indicado es el actual, dejarlo como esta.
-			if (step == stepList[currentStepIndex])
+			var targetIndex = stepList.IndexOf(step);
+			if (targetIndex == currentStepIndex)
 				return;
 
-			int i = currentStepIndex;
-			currentStepIndex = stepList.IndexOf(step);
+			if (currentStepIndex < 0) { currentStepIndex = 0; }
+				
 			// Si el objetivo esta por encima del actual, ir activando y terminando todos hasta llegar al nuestro.
-			if (i < currentStepIndex)
+			if (targetIndex > currentStepIndex)
 			{
+				int i = currentStepIndex;
+
 				stepList[i].End();
 				i++;
 
-				while (i < currentStepIndex)
+				while (i < targetIndex)
 				{
 					stepList[i].Activate();
 					stepList[i].End();
@@ -155,7 +158,8 @@ namespace Isostopy.StepSystem
 			// Si esta por debajo, ir reseteandolos.
 			else
 			{
-				while (i > currentStepIndex)
+				int i = currentStepIndex;
+				while (i > targetIndex)
 				{
 					stepList[i].Restart();
 					i--;
@@ -163,7 +167,35 @@ namespace Isostopy.StepSystem
 			}
 
 			// Activar el nuevo paso actual.
+			currentStepIndex = targetIndex;
 			stepList[currentStepIndex].Activate();
+		}
+
+		#endregion
+
+
+		// ------------------------------------------------------
+		#region Utilities
+
+		/// <summary> Devuelve el indice que ocupa el paso indicado en la lista. </summary>
+		public int GetIndexOfStep(Step step)
+		{
+			if (stepList.Contains(step) == false)
+				return -1;
+			return stepList.IndexOf(step);
+		}
+
+		/// <summary> Devuelve el paso que ocupa el indice indicado en la lista. </summary>
+		public Step GetStepAtIndex(int index)
+		{
+			if (index < 0 || index >= stepList.Count)
+				return null;
+			return stepList[index];
+		}
+
+		public List<Step> GetStepListCopy()
+		{
+			return new List<Step>(stepList);
 		}
 
 		#endregion
