@@ -83,7 +83,6 @@ namespace Isostopy.StepSystem
 			if (currentStepIndex >= stepList.Count)
 			{
 				playing = false;
-				currentStepIndex = -1;
 				return;
 			}
 			currentStep.Activate();
