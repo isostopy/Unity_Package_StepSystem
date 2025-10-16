@@ -28,10 +28,10 @@ Para crear experiencias personalizadas seguramente hará falta crear tipos de pa
 	| ``OnEnd()`` | Para ejecutar código al terminar. |
 	| ``OnRestart()`` | Para ejecutar código al reiniciar. Esta función debe dejar todo como estaba antes de activar el paso. |
 
-* Tienes que llamar a la función ``End()`` para terminar el paso y que la cadena pase al siguiente. Si no, la cadena se atasca en tu paso. Lo normal es que se termine directamente después de hacer lo que quieras hacer en ``OnActivate()``. 
+* Llama a la función ``End()`` para terminar el paso y que la cadena pase al siguiente. Si no lo haces, la cadena se atascará en tu paso. 
 
 ## Ejemplos
-Paso sencillo que imprime un mensaje por consola.
+Paso sencillo que imprime un mensaje por consola y termina directamente.
 ```C#
 	public class DebugStep : Step
 	{
@@ -42,30 +42,7 @@ Paso sencillo que imprime un mensaje por consola.
 		}
 	}
 ```
-Paso que activa un objeto y lo deja como estaba al reiniciar.
-```C#
-	public class ActivateObjectStep : Step
-	{
-		public GameObject targetObject = null;
-
-		private void Start()
-		{
-			targetObject.SetActive(false);
-		}
-
-		protected override void OnActivate()
-		{
-			targetObject.SetActive(true);
-			End();
-		}
-
-		protected override void OnRestart()
-		{
-			targetObject.SetActive(false);
-		}
-	}
-```
-Paso que espera a que ocurra algo para continuar con la cadena. No se llama a ``End()`` al activar, si no cuando ha ocurrido el evento al que estamos esperando.
+Paso que espera a que ocurra algo para continuar con la cadena. No se llama a ``End()`` directamente despues de activarlo, si no cuando ha ocurrido el evento al que estamos esperando.
 ```C#
 	public class WaitForSomethingStep : Step
 	{
@@ -82,6 +59,29 @@ Paso que espera a que ocurra algo para continuar con la cadena. No se llama a ``
 		protected override void OnEnd()
 		{
 			Debug.Log("Paso terminado.");
+		}
+	}
+```
+Paso que activa un objeto y lo deja como estaba al reiniciar.
+```C#
+	public class ActivateObjectStep : Step
+	{
+		public GameObject targetObject;
+
+		private void Start()
+		{
+			targetObject.SetActive(false);
+		}
+
+		protected override void OnActivate()
+		{
+			targetObject.SetActive(true);
+			End();
+		}
+
+		protected override void OnRestart()
+		{
+			targetObject.SetActive(false);
 		}
 	}
 ```
