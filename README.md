@@ -48,17 +48,17 @@ Paso que espera a que ocurra algo para continuar con la cadena. No se llama a ``
 	{
 		protected override void OnActivate()
 		{
-			Debug.Log("Paso activado.");
+			Something.AddListener(SomethingHappened);
 		}
 
-		public void Something()
+		public void SomethingHappened()
 		{
 			End();
 		}
 
 		protected override void OnEnd()
 		{
-			Debug.Log("Paso terminado.");
+			Something.RemoveListener(SomethingHappened);
 		}
 	}
 ```
